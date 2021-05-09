@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -14,7 +15,22 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlResult;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.example.cloudprog.R;
+
+//lab9-3 import
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3Client;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class CameraActivity extends Activity
 {
@@ -30,6 +46,21 @@ public class CameraActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
         this.imageView = (ImageView)this.findViewById(R.id.image_view);
+
+        //network policy
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        //CredentialsProvider initialization
+        CognitoCachingCredentialsProvider credentialsProvider;
+        credentialsProvider = new CognitoCachingCredentialsProvider(
+                getApplicationContext(),
+                "us-east-1:d2931239-99a1-4186-9a39-1d30474f75b5", // Use your Identity Pool ID
+                Regions.US_EAST_1 // Region
+        );
+
+        //s3client initialization
+        final AmazonS3Client s3Client = new AmazonS3Client(credentialsProvider.getCredentials());
 
         //button used to open camera
         Button photoButton = (Button) this.findViewById(R.id.capture_image_btn);
@@ -58,6 +89,33 @@ public class CameraActivity extends Activity
             public void onClick(View v)
             {
                 //Todo : Upload a picture to S3
+                //create a file to write bitmap data
+                File f = new File(getCacheDir(), "test1.jpg");
+                try {
+                    f.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                //Convert bitmap to byte array
+                Bitmap bitmap = upload_image;
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+                byte[] bitmapdata = bos.toByteArray();
+
+                //write the bytes in file && send image to s3-bucket
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(f);
+                    fos.write(bitmapdata);
+                    fos.flush();
+                    fos.close();
+                    s3Client.putObject(getString(R.string.bucket_name), "upload_image.jpg", f);
+                    Toast.makeText(CameraActivity.this, "Upload success", Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(CameraActivity.this, "Upload fail", Toast.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -68,8 +126,23 @@ public class CameraActivity extends Activity
             public void onClick(View v)
             {
                 //Todo : Get objecturl of the picture from S3
-
+                String url = s3Client.getResourceUrl(getString(R.string.bucket_name), "upload_image.jpg");
+//                Toast.makeText(CameraActivity.this, url, Toast.LENGTH_LONG).show();
                 //Todo : Send objecturl to sqs
+                CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                        getApplicationContext(),
+                        "us-east-1:d2931239-99a1-4186-9a39-1d30474f75b5", // Use your Identity pool ID
+                        Regions.US_EAST_1 // Region
+                );
+                final AmazonSQSClient sqs = new AmazonSQSClient(credentialsProvider.getCredentials());
+
+//                AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+                // URL
+                SendMessageRequest send_msg_request = new SendMessageRequest()
+                        .withQueueUrl("https://sqs.us-east-1.amazonaws.com/099287135517/myQueue")
+                        .withMessageBody(url)
+                        .withDelaySeconds(5);
+                sqs.sendMessage(send_msg_request);
             }
         });
 
