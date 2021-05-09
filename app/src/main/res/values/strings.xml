@@ -3,5 +3,7 @@
     <string name="bucket_name">cloudprog-hw3-109065517-1</string>
 <!--    <string name="queue_name">cloudprog-hw3</string>-->
     <string name="queue_name">output</string>
+    <string name="facebook_app_id">1508327033003376</string>
+    <string name="fb_login_protocol_scheme">fb1508327033003376</string>
 
 </resources>

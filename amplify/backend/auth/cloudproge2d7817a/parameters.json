@@ -1,8 +1,8 @@
 {
-    "identityPoolName": "cloudprog72e15c3a_identitypool_72e15c3a",
+    "identityPoolName": "cloudproge2d7817a_identitypool_e2d7817a",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "cloudp72e15c3a",
-    "userPoolName": "cloudprog72e15c3a_userpool_72e15c3a",
+    "resourceNameTruncated": "cloudpe2d7817a",
+    "userPoolName": "cloudproge2d7817a_userpool_e2d7817a",
     "autoVerifiedAttributes": [
         "email"
     ],
@@ -28,10 +28,10 @@
     "userpoolClientReadAttributes": [
         "email"
     ],
-    "userpoolClientLambdaRole": "cloudp72e15c3a_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "cloudpe2d7817a_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "72e15c3a",
-    "resourceName": "cloudprog72e15c3a",
+    "sharedId": "e2d7817a",
+    "resourceName": "cloudproge2d7817a",
     "authSelections": "identityPoolAndUserPool",
     "authRoleArn": {
         "Fn::GetAtt": [
@@ -45,10 +45,15 @@
             "Arn"
         ]
     },
-    "useDefault": "default",
+    "useDefault": "defaultSocial",
+    "hostedUI": true,
     "usernameAttributes": [
         "email"
     ],
+    "hostedUIDomainName": "cloudproge2d7817a-e2d7817a",
+    "authProvidersUserPool": [],
+    "hostedUIProviderMeta": "[]",
+    "oAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"https://google.com.tw/\"],\"LogoutURLs\":[\"https://google.com.tw/\"]}",
     "userPoolGroupList": [],
     "serviceName": "Cognito",
     "dependsOn": []
