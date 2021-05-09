@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 try{
                     String queue_url = sqs.getQueueUrl(getString(R.string.queue_name)).getQueueUrl();
                     Toast.makeText(MainActivity.this, queue_url, Toast.LENGTH_LONG).show();
-                    sqs.deleteQueue("queue_url");
+                    sqs.deleteQueue(queue_url);
                     Toast.makeText(MainActivity.this, "Delete Success", Toast.LENGTH_LONG).show();
 
                 }catch (Exception e){
