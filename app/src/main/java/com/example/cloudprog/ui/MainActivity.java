@@ -1,39 +1,41 @@
 package com.example.cloudprog.ui;
 
-import androidx.appcompat.app.AppCompatActivity;
+
+
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.example.cloudprog.R;
+import androidx.appcompat.app.AppCompatActivity;
 
-//lab9-2 import
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.DeleteBucketRequest;
 import com.amazonaws.services.s3.model.GroupGrantee;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.Permission;
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.regions.Regions;
-import android.os.StrictMode;
-import android.widget.Toast;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.AddPermissionRequest;
+import com.example.cloudprog.R;
 
-//delete bucket import
-import com.amazonaws.AmazonServiceException;
-//import com.amazonaws.SdkClientException;
-//import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-//import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.*;
 import java.util.Iterator;
 
+//lab9-2 import
+//delete bucket import
+//import com.amazonaws.SdkClientException;
+//import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+//import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+// sqs import
 
 
 
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         );
         // Initialize s3Client
         final AmazonS3Client s3Client = new AmazonS3Client(credentialsProvider.getCredentials());
+        //init sqs client
 
         Button button1 = findViewById(R.id.camera_btn);
         button1.setOnClickListener(btn_1_click);
@@ -116,14 +119,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         Button button4 = findViewById(R.id.create_queue_btn);
+
+        final AmazonSQSClient queueClient = new AmazonSQSClient(credentialsProvider.getCredentials());
+
         button4.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {//Todo : create a sqs queue & add permission
+                CreateQueueRequest create_request = new CreateQueueRequest(getString(R.string.queue_name))
+                        .addAttributesEntry("DelaySeconds", "60")
+                        .addAttributesEntry("MessageRetentionPeriod", "86400");
 
-
+                try {
+                    queueClient.createQueue(create_request);
+                } catch(Exception e){
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
+                }
             }
         });
 
