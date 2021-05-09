@@ -37,6 +37,7 @@ public class AuthenticatorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticator);
         //Todo : Handle cognito signin
+        //testing branch
         Injection.initialize(getApplicationContext());
 
         final IdentityManager identityManager = Injection.getAWSService().getIdentityManager();
