@@ -23,11 +23,12 @@ import com.amazonaws.services.s3.model.GroupGrantee;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.Permission;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.AddPermissionRequest;
 import com.example.cloudprog.R;
-
+//import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import java.util.Iterator;
 
 //lab9-2 import
@@ -122,19 +123,23 @@ public class MainActivity extends AppCompatActivity {
 
         Button button4 = findViewById(R.id.create_queue_btn);
 
-        final AmazonSQSClient queueClient = new AmazonSQSClient(credentialsProvider.getCredentials());
+        final AmazonSQSClient sqs = new AmazonSQSClient(credentialsProvider.getCredentials());
 
         button4.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {//Todo : create a sqs queue & add permission
+                AccessControlList acl = new AccessControlList();
+                acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
                 CreateQueueRequest create_request = new CreateQueueRequest(getString(R.string.queue_name))
                         .addAttributesEntry("DelaySeconds", "60")
                         .addAttributesEntry("MessageRetentionPeriod", "86400");
 
                 try {
-                    queueClient.createQueue(create_request);
+                    sqs.createQueue(create_request);
+                    Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
+
                 } catch(Exception e){
                     e.printStackTrace();
                     Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
@@ -149,6 +154,17 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v)
             {
                 //Todo : delete a sqs queue
+                try{
+                    String queue_url = sqs.getQueueUrl(getString(R.string.queue_name)).getQueueUrl();
+                    Toast.makeText(MainActivity.this, queue_url, Toast.LENGTH_LONG).show();
+                    sqs.deleteQueue("queue_url");
+                    Toast.makeText(MainActivity.this, "Delete Success", Toast.LENGTH_LONG).show();
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Delete fail", Toast.LENGTH_LONG).show();
+                }
+
             }
         });
 

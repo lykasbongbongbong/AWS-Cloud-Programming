@@ -121,12 +121,14 @@ public class CameraActivity extends Activity
 
         //button used to send URL of image to sqs
         Button triggerButton = (Button) this.findViewById(R.id.sqs_btn);
+        final AmazonSQSClient sqs = new AmazonSQSClient(credentialsProvider.getCredentials());
+
         triggerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
             {
                 //Todo : Get objecturl of the picture from S3
-                String url = s3Client.getResourceUrl(getString(R.string.bucket_name), "upload_image.jpg");
+                String s3objurl = s3Client.getResourceUrl(getString(R.string.bucket_name), "upload_image.jpg");
 //                Toast.makeText(CameraActivity.this, url, Toast.LENGTH_LONG).show();
                 //Todo : Send objecturl to sqs
                 CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -134,15 +136,25 @@ public class CameraActivity extends Activity
                         "us-east-1:d2931239-99a1-4186-9a39-1d30474f75b5", // Use your Identity pool ID
                         Regions.US_EAST_1 // Region
                 );
-                final AmazonSQSClient sqs = new AmazonSQSClient(credentialsProvider.getCredentials());
 
-//                AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-                // URL
-                SendMessageRequest send_msg_request = new SendMessageRequest()
-                        .withQueueUrl("https://sqs.us-east-1.amazonaws.com/099287135517/myQueue")
-                        .withMessageBody(url)
-                        .withDelaySeconds(5);
-                sqs.sendMessage(send_msg_request);
+                // URL: https://sqs.us-east-1.amazonaws.com/099287135517/cloudprog-hw3
+                // Url myqueue: https://sqs.us-east-1.amazonaws.com/099287135517/myQueue
+                try{
+                    String queue_url = sqs.getQueueUrl(getString(R.string.queue_name)).getQueueUrl();
+                    Toast.makeText(CameraActivity.this, queue_url, Toast.LENGTH_LONG).show();
+
+                    SendMessageRequest send_msg_request = new SendMessageRequest()
+                            .withQueueUrl(queue_url)
+                            .withMessageBody(s3objurl)
+                            .withDelaySeconds(5);
+                    sqs.sendMessage(send_msg_request);
+                    Toast.makeText(CameraActivity.this, "send success", Toast.LENGTH_LONG).show();
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Toast.makeText(CameraActivity.this, "send fail", Toast.LENGTH_LONG).show();
+                }
+
             }
         });
 
