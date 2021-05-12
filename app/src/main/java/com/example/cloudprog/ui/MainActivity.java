@@ -1,8 +1,5 @@
 package com.example.cloudprog.ui;
 
-
-
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -27,6 +24,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.AddPermissionRequest;
+import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.example.cloudprog.R;
 //import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import java.util.Iterator;
@@ -54,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         // Initialize the Amazon Cognito credentials provider
         CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                 getApplicationContext(),
-                "us-east-1:d2931239-99a1-4186-9a39-1d30474f75b5", // Use your Identity pool ID
+                "us-east-1:6e7847ad-209a-49a8-b46e-4e45d8894fd2", // Use your Identity pool ID
                 Regions.US_EAST_1 // Region
         );
         // Initialize s3Client
@@ -72,17 +70,36 @@ public class MainActivity extends AppCompatActivity {
             {
                 //Todo : create a s3 bucket & add permission
                 try{
-                    //Check bucket name in app/res/values/string.xml
-                    AccessControlList acl = new AccessControlList();
-                    acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
-                    CreateBucketRequest createBucketRequest = new CreateBucketRequest(getString(R.string.bucket_name))
-                            .withAccessControlList(acl).withCannedAcl(CannedAccessControlList.PublicReadWrite);
-                    s3Client.createBucket(createBucketRequest);
-                    Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
+                    //Todo: additional check if bucket exists
+                    if (s3Client.doesBucketExist(getString(R.string.bucket_name))){
+                        Toast.makeText(MainActivity.this, "Create fail: bucket already exists", Toast.LENGTH_LONG).show();
+                    }
+                    else{
+                        //Check bucket name in app/res/values/string.xml
+                        Toast.makeText(MainActivity.this, "Start creating bucket", Toast.LENGTH_LONG).show();
+                        AccessControlList acl = new AccessControlList();
+                        acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
+                        CreateBucketRequest createBucketRequest = new CreateBucketRequest(getString(R.string.bucket_name))
+                                .withAccessControlList(acl).withCannedAcl(CannedAccessControlList.PublicReadWrite);
+                        s3Client.createBucket(createBucketRequest);
+                        Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
+                    }
                 }catch(Exception e){
                     e.printStackTrace();
                     Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
                 }
+//                try{
+//                    //Check bucket name in app/res/values/string.xml
+//                    AccessControlList acl = new AccessControlList();
+//                    acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
+//                    CreateBucketRequest createBucketRequest = new CreateBucketRequest(getString(R.string.bucket_name))
+//                            .withAccessControlList(acl).withCannedAcl(CannedAccessControlList.PublicReadWrite);
+//                    s3Client.createBucket(createBucketRequest);
+//                    Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
+//                }catch(Exception e){
+//                    e.printStackTrace();
+//                    Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
+//                }
             }
         });
 
@@ -95,24 +112,31 @@ public class MainActivity extends AppCompatActivity {
                 //Todo : delete a s3 bucket
                 try{
                     String bucketName = getString(R.string.bucket_name);
-                    //要刪掉bucket要先清空裡面的東西
-                    ObjectListing objectListing = s3Client.listObjects(bucketName);
-                    while (true) {
-                        Iterator<S3ObjectSummary> objIter = objectListing.getObjectSummaries().iterator();
-                        while (objIter.hasNext()) {
-                            s3Client.deleteObject(bucketName, objIter.next().getKey());
+                    //check if bucket exists
+                    if (s3Client.doesBucketExist(getString(R.string.bucket_name))){
+                        Toast.makeText(MainActivity.this, "Bucket exists, start deletion process", Toast.LENGTH_LONG).show();
+                        //要刪掉bucket要先清空裡面的東西
+                        ObjectListing objectListing = s3Client.listObjects(bucketName);
+                        while (true) {
+                            Iterator<S3ObjectSummary> objIter = objectListing.getObjectSummaries().iterator();
+                            while (objIter.hasNext()) {
+                                s3Client.deleteObject(bucketName, objIter.next().getKey());
+                            }
+                            if (objectListing.isTruncated()) {
+                                objectListing = s3Client.listNextBatchOfObjects(objectListing);
+                            } else {
+                                break;
+                            }
                         }
-                        if (objectListing.isTruncated()) {
-                            objectListing = s3Client.listNextBatchOfObjects(objectListing);
-                        } else {
-                            break;
-                        }
+                        //Check bucket name in app/res/values/string.xml
+                        DeleteBucketRequest deleteBucketRequest = new DeleteBucketRequest(getString(R.string.bucket_name));
+                        s3Client.deleteBucket(deleteBucketRequest);
+                        Toast.makeText(MainActivity.this, "Delete success", Toast.LENGTH_LONG).show();
+                    }
+                    else{
+                        Toast.makeText(MainActivity.this, "Delete fail: bucket not exists", Toast.LENGTH_LONG).show();
                     }
 
-                    //Check bucket name in app/res/values/string.xml
-                    DeleteBucketRequest deleteBucketRequest = new DeleteBucketRequest(getString(R.string.bucket_name));
-                    s3Client.deleteBucket(deleteBucketRequest);
-                    Toast.makeText(MainActivity.this, "Delete success", Toast.LENGTH_LONG).show();
                 }catch(Exception e){
                     e.printStackTrace();
                     Toast.makeText(MainActivity.this, "Delete fail", Toast.LENGTH_LONG).show();
@@ -130,20 +154,28 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v)
             {//Todo : create a sqs queue & add permission
-                AccessControlList acl = new AccessControlList();
-                acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
-                CreateQueueRequest create_request = new CreateQueueRequest(getString(R.string.queue_name))
-                        .addAttributesEntry("DelaySeconds", "60")
-                        .addAttributesEntry("MessageRetentionPeriod", "86400");
+                try{
+                    String queue_url = sqs.getQueueUrl(getString(R.string.queue_name)).getQueueUrl();
+                    //代表 queue exist
+                    Toast.makeText(MainActivity.this, "Create fail: queue exists", Toast.LENGTH_LONG).show();
 
-                try {
-                    sqs.createQueue(create_request);
-                    Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
+                }catch(Exception e){
+                    //代表 queue not exists
+                    AccessControlList acl = new AccessControlList();
+                    acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
+                    CreateQueueRequest create_request = new CreateQueueRequest(getString(R.string.queue_name))
+                            .addAttributesEntry("DelaySeconds", "60")
+                            .addAttributesEntry("MessageRetentionPeriod", "86400");
+                    try {
+                        sqs.createQueue(create_request);
+                        Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
 
-                } catch(Exception e){
-                    e.printStackTrace();
-                    Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
+                    } catch(Exception exc){
+                        exc.printStackTrace();
+                        Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
+                    }
                 }
+
             }
         });
 
@@ -156,13 +188,15 @@ public class MainActivity extends AppCompatActivity {
                 //Todo : delete a sqs queue
                 try{
                     String queue_url = sqs.getQueueUrl(getString(R.string.queue_name)).getQueueUrl();
+                    // 代表有queue
                     Toast.makeText(MainActivity.this, queue_url, Toast.LENGTH_LONG).show();
                     sqs.deleteQueue(queue_url);
                     Toast.makeText(MainActivity.this, "Delete Success", Toast.LENGTH_LONG).show();
 
                 }catch (Exception e){
+                    //queue 不存在
                     e.printStackTrace();
-                    Toast.makeText(MainActivity.this, "Delete fail", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "Delete fail: queue not exists", Toast.LENGTH_LONG).show();
                 }
 
             }

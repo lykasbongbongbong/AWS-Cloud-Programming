@@ -55,7 +55,7 @@ public class CameraActivity extends Activity
         CognitoCachingCredentialsProvider credentialsProvider;
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 getApplicationContext(),
-                "us-east-1:d2931239-99a1-4186-9a39-1d30474f75b5", // Use your Identity Pool ID
+                "us-east-1:6e7847ad-209a-49a8-b46e-4e45d8894fd2", // Use your Identity Pool ID
                 Regions.US_EAST_1 // Region
         );
 
@@ -110,7 +110,7 @@ public class CameraActivity extends Activity
                     fos.write(bitmapdata);
                     fos.flush();
                     fos.close();
-                    s3Client.putObject(getString(R.string.bucket_name), "upload_image.jpg", f);
+                    s3Client.putObject(getString(R.string.bucket_name), "upload_image_check_perm.jpg", f);
                     Toast.makeText(CameraActivity.this, "Upload success", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     e.printStackTrace();
