@@ -110,7 +110,7 @@ public class CameraActivity extends Activity
                     fos.write(bitmapdata);
                     fos.flush();
                     fos.close();
-                    s3Client.putObject(getString(R.string.bucket_name), "upload_image_check_perm.jpg", f);
+                    s3Client.putObject(getString(R.string.bucket_name), "upload_image.jpg", f);
                     Toast.makeText(CameraActivity.this, "Upload success", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     e.printStackTrace();
