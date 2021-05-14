@@ -108,9 +108,17 @@ public class MainActivity extends AppCompatActivity {
                                         .withResources(new Resource(
                                                 "arn:aws:s3:::" + getString(R.string.bucket_name) + "/*")));
                         String policy = bucket_policy.toJson();
+                        String policy_test = "";
+                        String p = "{\"Statement\":[{\"Action\":\"s3:GetObject\",\"Effect\":\"Allow\",\"Principal\":"
+                                + "\"*\",\"Resource\":\"arn:aws:s3:::" + getString(R.string.bucket_name) + "/*\"}],\"Version\": \"2012-10-17\"}";
+
                         try {
-                            s3Client.setBucketPolicy(getString(R.string.bucket_name), policy);
+                            SetBucketPolicyRequest setBucketPolicyRequest = new SetBucketPolicyRequest(getString(R.string.bucket_name), policy);
+                            s3Client.setBucketPolicy(setBucketPolicyRequest);
+//                            s3Client.setBucketPolicy("cloudprog-hw3-109065517", p);
+
                         } catch (AmazonServiceException e) {
+                            System.err.println(e.getErrorMessage());
                             Toast.makeText(MainActivity.this, "Error: set policy", Toast.LENGTH_LONG).show();
                         }
 
