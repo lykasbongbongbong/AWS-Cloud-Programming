@@ -18,6 +18,7 @@ import com.amazonaws.auth.policy.Statement;
 import com.amazonaws.auth.policy.actions.S3Actions;
 import com.amazonaws.auth.policy.actions.SQSActions;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.BucketPolicy;
@@ -99,44 +100,25 @@ public class MainActivity extends AppCompatActivity {
                         s3Client.createBucket(createBucketRequest);
                         Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
                         //set policy
+
                         Policy bucket_policy = new Policy().withStatements(
                                 new Statement(Statement.Effect.Allow)
                                         .withPrincipals(Principal.AllUsers)
                                         .withActions(S3Actions.GetObject)
                                         .withResources(new Resource(
                                                 "arn:aws:s3:::" + getString(R.string.bucket_name) + "/*")));
-
-
-//                        String policy = bucket_policy.toJson();
-
-                        try{
-                            String policyText = bucket_policy.toString();
-                            SetBucketPolicyRequest setBucketPolicyRequest = new SetBucketPolicyRequest(getString(R.string.bucket_name), policyText);
-                            s3Client.setBucketPolicy(setBucketPolicyRequest);
-//                            s3Client.setBucketPolicy(getString(R.string.bucket_name), bucket_policy.toJson());
+                        String policy = bucket_policy.toJson();
+                        try {
+                            s3Client.setBucketPolicy(getString(R.string.bucket_name), policy);
                         } catch (AmazonServiceException e) {
-                            System.err.println(e.getErrorMessage());
                             Toast.makeText(MainActivity.this, "Error: set policy", Toast.LENGTH_LONG).show();
                         }
-
 
                     }
                 }catch(Exception e){
                     e.printStackTrace();
                     Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
                 }
-//                try{
-//                    //Check bucket name in app/res/values/string.xml
-//                    AccessControlList acl = new AccessControlList();
-//                    acl.grantPermission(GroupGrantee.AllUsers, Permission.FullControl);
-//                    CreateBucketRequest createBucketRequest = new CreateBucketRequest(getString(R.string.bucket_name))
-//                            .withAccessControlList(acl).withCannedAcl(CannedAccessControlList.PublicReadWrite);
-//                    s3Client.createBucket(createBucketRequest);
-//                    Toast.makeText(MainActivity.this, "Create success", Toast.LENGTH_LONG).show();
-//                }catch(Exception e){
-//                    e.printStackTrace();
-//                    Toast.makeText(MainActivity.this, "Create fail", Toast.LENGTH_LONG).show();
-//                }
             }
         });
 
