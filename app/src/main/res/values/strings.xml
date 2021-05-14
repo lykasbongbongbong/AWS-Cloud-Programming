@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">CloudProg</string>
     <string name="bucket_name">cloudprog-hw3-109065517</string>
-    <string name="queue_name">cloudprog-hw3</string>
+    <string name="queue_name">cloudprog-hw3-109065517</string>
 <!--    <string name="queue_name">output</string>-->
 
 </resources>
